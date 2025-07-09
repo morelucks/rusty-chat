@@ -1,3 +1,4 @@
 pub mod message;
-pub mod user;
 pub mod message_types;
+pub mod room;
+pub mod user;
