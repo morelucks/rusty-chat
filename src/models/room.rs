@@ -1,4 +1,3 @@
-
 use crate::database::connection::DbPool;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -59,11 +58,16 @@ impl Room {
         Ok(rooms)
     }
 
-    pub async fn find_by_created_by(pool: &DbPool, created_by: Uuid) -> Result<Vec<Self>, sqlx::Error> {
-        let rooms = sqlx::query_as::<_, Room>("SELECT * FROM rooms WHERE created_by = $1 ORDER BY created_at DESC")
-            .bind(created_by)
-            .fetch_all(pool)
-            .await?;
+    pub async fn find_by_created_by(
+        pool: &DbPool,
+        created_by: Uuid,
+    ) -> Result<Vec<Self>, sqlx::Error> {
+        let rooms = sqlx::query_as::<_, Room>(
+            "SELECT * FROM rooms WHERE created_by = $1 ORDER BY created_at DESC",
+        )
+        .bind(created_by)
+        .fetch_all(pool)
+        .await?;
 
         Ok(rooms)
     }

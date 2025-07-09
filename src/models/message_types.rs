@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
@@ -18,4 +18,4 @@ pub enum ServerMessage {
     Read { message_id: String, user_id: String },
     Join { room_id: String, user_id: String },
     Leave { room_id: String, user_id: String },
-} 
+}

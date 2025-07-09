@@ -1,4 +1,3 @@
-
 use crate::database::connection::DbPool;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -52,18 +51,21 @@ impl Message {
     }
 
     pub async fn find_all(pool: &DbPool) -> Result<Vec<Self>, sqlx::Error> {
-        let messages = sqlx::query_as::<_, Message>("SELECT * FROM messages ORDER BY created_at DESC")
-            .fetch_all(pool)
-            .await?;
+        let messages =
+            sqlx::query_as::<_, Message>("SELECT * FROM messages ORDER BY created_at DESC")
+                .fetch_all(pool)
+                .await?;
 
         Ok(messages)
     }
 
     pub async fn find_by_room_id(pool: &DbPool, room_id: Uuid) -> Result<Vec<Self>, sqlx::Error> {
-        let messages = sqlx::query_as::<_, Message>("SELECT * FROM messages WHERE room_id = $1 ORDER BY created_at DESC")
-            .bind(room_id)
-            .fetch_all(pool)
-            .await?;
+        let messages = sqlx::query_as::<_, Message>(
+            "SELECT * FROM messages WHERE room_id = $1 ORDER BY created_at DESC",
+        )
+        .bind(room_id)
+        .fetch_all(pool)
+        .await?;
 
         Ok(messages)
     }
