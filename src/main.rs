@@ -1,16 +1,16 @@
-use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{App, HttpResponse, HttpServer, Responder, get, middleware::Logger, web};
 use config::settings::AppConfig;
 use database::connection::{create_pool, run_migrations};
-use tracing::{info, error};
-use tracing_subscriber;
 use dotenv::dotenv;
+use tracing::{error, info};
+use tracing_subscriber;
 
 pub mod config;
 pub mod database;
-pub mod models;
 pub mod handlers;
-pub mod utils;
+pub mod models;
 pub mod routes;
+pub mod utils;
 
 #[get("/")]
 async fn home() -> impl Responder {
@@ -28,14 +28,14 @@ async fn main() -> std::io::Result<()> {
     });
 
     info!("Starting server with config: {:?}", config);
-    
+
     let pool = create_pool(&config.database).await.unwrap_or_else(|e| {
         error!("Failed to create database pool: {}", e);
         std::process::exit(1);
     });
 
     info!("Database pool created successfully");
-    
+
     run_migrations(&pool).await.unwrap_or_else(|e| {
         error!("Failed to run database migrations: {}", e);
         std::process::exit(1);
@@ -52,14 +52,11 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .app_data(web::Data::new(config.clone()))
             .wrap(Logger::default())
-            .service(
-                web::scope("/api/v1")
-                    .configure(routes::api::scoped_config)
-            )
+            .service(web::scope("/api/v1").configure(routes::api::scoped_config))
     })
     .bind((server_host, server_port))?
     .run()
     .await?;
-    
+
     Ok(())
 }
