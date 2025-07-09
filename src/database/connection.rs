@@ -1,6 +1,6 @@
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use std::time::Duration;
 use crate::config::settings::DatabaseConfig;
+use sqlx::{Pool, Postgres, postgres::PgPoolOptions};
+use std::time::Duration;
 
 pub type DbPool = Pool<Postgres>;
 

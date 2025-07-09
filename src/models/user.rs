@@ -1,8 +1,8 @@
+use crate::database::connection::DbPool;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
-use crate::database::connection::DbPool;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
@@ -26,34 +26,34 @@ impl User {
         let user = sqlx::query_as::<_, User>(
             "INSERT INTO users (id, username, email, wallet_address, created_at, updated_at) 
              VALUES ($1, $2, $3, $4, $5) 
-             RETURNING *")
-            .bind(Uuid::new_v4())
-            .bind(user.username)
-            .bind(user.email)
-            .bind(user.wallet_addres)
-            .bind(now)
-            .bind(now)
-            .fetch_one(pool)
-            .await?;
-        
+             RETURNING *",
+        )
+        .bind(Uuid::new_v4())
+        .bind(user.username)
+        .bind(user.email)
+        .bind(user.wallet_addres)
+        .bind(now)
+        .bind(now)
+        .fetch_one(pool)
+        .await?;
+
         Ok(user)
     }
-    
+
     pub async fn find_by_id(pool: &DbPool, id: Uuid) -> Result<Option<Self>, sqlx::Error> {
-        let user = sqlx::query_as::<_, User>(
-            "SELECT * FROM users WHERE id = $1")
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
             .bind(id)
             .fetch_optional(pool)
             .await?;
-        
+
         Ok(user)
     }
-    
+
     pub async fn find_all(pool: &DbPool) -> Result<Vec<Self>, sqlx::Error> {
         let users = sqlx::query_as::<_, User>("SELECT * FROM users ORDER BY created_at DESC")
-        .fetch_all(pool)
-        .await?;
-        
+            .fetch_all(pool)
+            .await?;
+
         Ok(users)
     }
 }
