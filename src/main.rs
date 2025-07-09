@@ -46,6 +46,7 @@ async fn main() -> std::io::Result<()> {
     let server_host = config.server.host.clone();
     let server_port = config.server.port;
 
+    //use: http://localhost:8080/api/v1/users to test
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
