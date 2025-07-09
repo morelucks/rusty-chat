@@ -1,4 +1,16 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, get};
+use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
+use config::settings::AppConfig;
+use database::connection::{create_pool, run_migrations};
+use tracing::{info, error};
+use tracing_subscriber;
+use dotenv::dotenv;
+
+pub mod config;
+pub mod database;
+pub mod models;
+pub mod handlers;
+pub mod utils;
+pub mod routes;
 
 #[get("/")]
 async fn home() -> impl Responder {
@@ -7,7 +19,47 @@ async fn home() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let server = HttpServer::new(|| App::new().service(home)).bind(("127.0.0.1", 8080))?;
-    println!("Server is running at http://127.0.0.1:8080 ");
-    server.run().await
+    dotenv().ok();
+    tracing_subscriber::fmt::init();
+
+    let config = AppConfig::from_env().unwrap_or_else(|e| {
+        error!("Failed to load configuration: {}", e);
+        std::process::exit(1);
+    });
+
+    info!("Starting server with config: {:?}", config);
+    
+    let pool = create_pool(&config.database).await.unwrap_or_else(|e| {
+        error!("Failed to create database pool: {}", e);
+        std::process::exit(1);
+    });
+
+    info!("Database pool created successfully");
+    
+    run_migrations(&pool).await.unwrap_or_else(|e| {
+        error!("Failed to run database migrations: {}", e);
+        std::process::exit(1);
+    });
+
+    info!("Database migrations completed successfully");
+
+    let server_host = config.server.host.clone();
+    let server_port = config.server.port;
+
+    //use: http://localhost:8080/api/v1/users to test
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(config.clone()))
+            .wrap(Logger::default())
+            .service(
+                web::scope("/api/v1")
+                    .configure(routes::api::scoped_config)
+            )
+    })
+    .bind((server_host, server_port))?
+    .run()
+    .await?;
+    
+    Ok(())
 }
