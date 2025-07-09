@@ -15,23 +15,27 @@ pub struct User {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateUser {
+    pub full_name: String,
     pub username: String,
     pub email: String,
-    pub wallet_addres: String,
+    pub password: String,
+    pub status: String,
 }
 
 impl User {
     pub async fn create(pool: &DbPool, user: CreateUser) -> Result<Self, sqlx::Error> {
         let now = Utc::now();
         let user = sqlx::query_as::<_, User>(
-            "INSERT INTO users (id, username, email, wallet_address, created_at, updated_at) 
-             VALUES ($1, $2, $3, $4, $5) 
+            "INSERT INTO users (id, full_name, username, email, password, status, created_at, updated_at) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
              RETURNING *",
         )
         .bind(Uuid::new_v4())
+        .bind(user.full_name)
         .bind(user.username)
         .bind(user.email)
-        .bind(user.wallet_addres)
+        .bind(user.password)
+        .bind(user.status)
         .bind(now)
         .bind(now)
         .fetch_one(pool)
