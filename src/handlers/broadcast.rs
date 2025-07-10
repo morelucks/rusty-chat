@@ -1,6 +1,6 @@
 use crate::{
     database::connection::DbPool,
-    models::message_broadcast::{BroadcastService, CreateBroadcastMessage, BroadcastMessageType},
+    handlers::message_broadcast::{BroadcastService, CreateBroadcastMessage, BroadcastMessageType},
     utils::helpers::ApiResponse,
 };
 use actix_web::{HttpResponse, Result, web};
