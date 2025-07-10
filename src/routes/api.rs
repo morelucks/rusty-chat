@@ -9,5 +9,48 @@ pub fn scoped_config(cfg: &mut web::ServiceConfig) {
                 .route(web::get().to(handlers::users::index))
                 .route(web::head().to(HttpResponse::MethodNotAllowed)),
         ),
+    )
+    .service(
+        web::scope("/broadcast")
+            .service(
+                web::resource("/text")
+                    .route(web::post().to(handlers::broadcast::broadcast_text))
+                    .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            )
+            .service(
+                web::resource("/typing")
+                    .route(web::post().to(handlers::broadcast::broadcast_typing))
+                    .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            )
+            .service(
+                web::resource("/read")
+                    .route(web::post().to(handlers::broadcast::broadcast_read_receipt))
+                    .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            )
+            .service(
+                web::resource("/join")
+                    .route(web::post().to(handlers::broadcast::join_room))
+                    .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            )
+            .service(
+                web::resource("/leave")
+                    .route(web::post().to(handlers::broadcast::leave_room))
+                    .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            )
+            .service(
+                web::resource("/system")
+                    .route(web::post().to(handlers::broadcast::broadcast_system_message))
+                    .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            )
+            .service(
+                web::resource("/room/{room_id}/users")
+                    .route(web::get().to(handlers::broadcast::get_room_users))
+                    .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            )
+            .service(
+                web::resource("/room/{room_id}/user/{user_id}")
+                    .route(web::get().to(handlers::broadcast::is_user_in_room))
+                    .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            ),
     );
 }
