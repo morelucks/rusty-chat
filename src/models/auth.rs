@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
@@ -48,4 +48,4 @@ impl Claims {
             iat: now,
         }
     }
-} 
+}

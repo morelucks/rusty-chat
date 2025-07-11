@@ -2,11 +2,11 @@ use crate::database::connection::DbPool;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use uuid::Uuid;
 use std::collections::HashMap;
-use tokio::sync::broadcast;
 use std::sync::Arc;
+use tokio::sync::broadcast;
 use tokio::sync::RwLock;
+use uuid::Uuid;
 
 /// Internal struct for broadcasting messages to all users in a room except the sender
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,23 +42,27 @@ impl RoomConnectionManager {
     }
 
     /// Add a user to a room's connection pool
-    pub async fn add_user_to_room(&self, room_id: Uuid, user_id: Uuid) -> broadcast::Receiver<String> {
+    pub async fn add_user_to_room(
+        &self,
+        room_id: Uuid,
+        user_id: Uuid,
+    ) -> broadcast::Receiver<String> {
         let mut connections = self.connections.write().await;
-        
+
         let room_connections = connections.entry(room_id).or_insert_with(HashMap::new);
         let (tx, rx) = broadcast::channel(100); // Buffer size of 100 messages
         room_connections.insert(user_id, tx);
-        
+
         rx
     }
 
     /// Remove a user from a room's connection pool
     pub async fn remove_user_from_room(&self, room_id: Uuid, user_id: Uuid) {
         let mut connections = self.connections.write().await;
-        
+
         if let Some(room_connections) = connections.get_mut(&room_id) {
             room_connections.remove(&user_id);
-            
+
             // Remove room if no users left
             if room_connections.is_empty() {
                 connections.remove(&room_id);
@@ -67,12 +71,17 @@ impl RoomConnectionManager {
     }
 
     /// Broadcast message to all users in a room except the sender
-    pub async fn broadcast_to_room(&self, room_id: Uuid, sender_id: Uuid, message: &BroadcastMessage) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn broadcast_to_room(
+        &self,
+        room_id: Uuid,
+        sender_id: Uuid,
+        message: &BroadcastMessage,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let connections = self.connections.read().await;
-        
+
         if let Some(room_connections) = connections.get(&room_id) {
             let message_json = serde_json::to_string(&message)?;
-            
+
             for (user_id, sender) in room_connections.iter() {
                 // Skip the sender
                 if *user_id != sender_id {
@@ -82,14 +91,14 @@ impl RoomConnectionManager {
                 }
             }
         }
-        
+
         Ok(())
     }
 
     /// Get all users in a room
     pub async fn get_room_users(&self, room_id: Uuid) -> Vec<Uuid> {
         let connections = self.connections.read().await;
-        
+
         if let Some(room_connections) = connections.get(&room_id) {
             room_connections.keys().cloned().collect()
         } else {
@@ -100,7 +109,7 @@ impl RoomConnectionManager {
     /// Check if a user is in a room
     pub async fn is_user_in_room(&self, room_id: Uuid, user_id: Uuid) -> bool {
         let connections = self.connections.read().await;
-        
+
         if let Some(room_connections) = connections.get(&room_id) {
             room_connections.contains_key(&user_id)
         } else {
@@ -138,7 +147,9 @@ impl BroadcastService {
             timestamp: Utc::now(),
         };
 
-        self.connection_manager.broadcast_to_room(room_id, sender_id, &message).await
+        self.connection_manager
+            .broadcast_to_room(room_id, sender_id, &message)
+            .await
     }
 
     /// Broadcast typing indicator
@@ -155,7 +166,9 @@ impl BroadcastService {
             timestamp: Utc::now(),
         };
 
-        self.connection_manager.broadcast_to_room(room_id, sender_id, &message).await
+        self.connection_manager
+            .broadcast_to_room(room_id, sender_id, &message)
+            .await
     }
 
     /// Broadcast read receipt
@@ -173,7 +186,9 @@ impl BroadcastService {
             timestamp: Utc::now(),
         };
 
-        self.connection_manager.broadcast_to_room(room_id, sender_id, &message).await
+        self.connection_manager
+            .broadcast_to_room(room_id, sender_id, &message)
+            .await
     }
 
     /// Broadcast user join event
@@ -190,7 +205,9 @@ impl BroadcastService {
             timestamp: Utc::now(),
         };
 
-        self.connection_manager.broadcast_to_room(room_id, user_id, &message).await
+        self.connection_manager
+            .broadcast_to_room(room_id, user_id, &message)
+            .await
     }
 
     /// Broadcast user leave event
@@ -207,7 +224,9 @@ impl BroadcastService {
             timestamp: Utc::now(),
         };
 
-        self.connection_manager.broadcast_to_room(room_id, user_id, &message).await
+        self.connection_manager
+            .broadcast_to_room(room_id, user_id, &message)
+            .await
     }
 
     /// Broadcast system message
@@ -225,7 +244,9 @@ impl BroadcastService {
         };
 
         // System messages are sent to all users including the "sender" (which is nil)
-        self.connection_manager.broadcast_to_room(room_id, Uuid::nil(), &message).await
+        self.connection_manager
+            .broadcast_to_room(room_id, Uuid::nil(), &message)
+            .await
     }
 
     /// Add user to room and broadcast join event
@@ -234,11 +255,14 @@ impl BroadcastService {
         room_id: Uuid,
         user_id: Uuid,
     ) -> Result<broadcast::Receiver<String>, Box<dyn std::error::Error + Send + Sync>> {
-        let receiver = self.connection_manager.add_user_to_room(room_id, user_id).await;
-        
+        let receiver = self
+            .connection_manager
+            .add_user_to_room(room_id, user_id)
+            .await;
+
         // Broadcast join event to other users
         self.broadcast_user_join(room_id, user_id).await?;
-        
+
         Ok(receiver)
     }
 
@@ -250,10 +274,12 @@ impl BroadcastService {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Broadcast leave event to other users first
         self.broadcast_user_leave(room_id, user_id).await?;
-        
+
         // Remove from connection manager
-        self.connection_manager.remove_user_from_room(room_id, user_id).await;
-        
+        self.connection_manager
+            .remove_user_from_room(room_id, user_id)
+            .await;
+
         Ok(())
     }
 
@@ -273,7 +299,12 @@ pub struct CreateBroadcastMessage {
 }
 
 impl CreateBroadcastMessage {
-    pub fn new(room_id: Uuid, sender_id: Uuid, content: String, message_type: BroadcastMessageType) -> Self {
+    pub fn new(
+        room_id: Uuid,
+        sender_id: Uuid,
+        content: String,
+        message_type: BroadcastMessageType,
+    ) -> Self {
         Self {
             room_id,
             sender_id,
@@ -287,7 +318,12 @@ impl CreateBroadcastMessage {
     }
 
     pub fn typing(room_id: Uuid, sender_id: Uuid) -> Self {
-        Self::new(room_id, sender_id, "typing".to_string(), BroadcastMessageType::Typing)
+        Self::new(
+            room_id,
+            sender_id,
+            "typing".to_string(),
+            BroadcastMessageType::Typing,
+        )
     }
 
     pub fn read(room_id: Uuid, sender_id: Uuid, message_id: String) -> Self {
@@ -295,14 +331,24 @@ impl CreateBroadcastMessage {
     }
 
     pub fn join(room_id: Uuid, user_id: Uuid) -> Self {
-        Self::new(room_id, user_id, "joined".to_string(), BroadcastMessageType::Join)
+        Self::new(
+            room_id,
+            user_id,
+            "joined".to_string(),
+            BroadcastMessageType::Join,
+        )
     }
 
     pub fn leave(room_id: Uuid, user_id: Uuid) -> Self {
-        Self::new(room_id, user_id, "left".to_string(), BroadcastMessageType::Leave)
+        Self::new(
+            room_id,
+            user_id,
+            "left".to_string(),
+            BroadcastMessageType::Leave,
+        )
     }
 
     pub fn system(room_id: Uuid, content: String) -> Self {
         Self::new(room_id, Uuid::nil(), content, BroadcastMessageType::System)
     }
-} 
+}

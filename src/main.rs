@@ -1,4 +1,4 @@
-use actix_web::{App, HttpResponse, HttpServer, Responder, get, middleware::Logger, web};
+use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use config::settings::AppConfig;
 use database::connection::{create_pool, run_migrations};
 use dotenv::dotenv;
