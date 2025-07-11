@@ -1,13 +1,13 @@
 // middleware/auth.rs
+use crate::services::auth::AuthService;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     error::ErrorUnauthorized,
     Error, HttpMessage,
 };
-use futures_util::future::{LocalBoxFuture, Ready, ready};
+use futures_util::future::{ready, LocalBoxFuture, Ready};
 use std::rc::Rc;
 use uuid::Uuid;
-use crate::services::auth::AuthService;
 
 #[derive(Debug, Clone)]
 pub struct AuthenticatedUser {

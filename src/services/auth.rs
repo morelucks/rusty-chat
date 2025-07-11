@@ -1,6 +1,6 @@
+use crate::database::connection::DbPool;
 use crate::models::auth::Claims;
 use crate::models::user::User;
-use crate::database::connection::DbPool;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use std::env;
 
@@ -12,7 +12,7 @@ pub struct AuthService {
 impl AuthService {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let secret = env::var("JWT_SECRET").unwrap_or_else(|_| "your-secret-key".to_string());
-        
+
         Ok(Self {
             encoding_key: EncodingKey::from_secret(secret.as_ref()),
             decoding_key: DecodingKey::from_secret(secret.as_ref()),
@@ -35,7 +35,8 @@ impl AuthService {
         username: &str,
         password: &str,
     ) -> Result<Option<User>, Box<dyn std::error::Error>> {
-        User::authenticate(pool, username, password).await
+        User::authenticate(pool, username, password)
+            .await
             .map_err(|e| e.into())
     }
-} 
+}

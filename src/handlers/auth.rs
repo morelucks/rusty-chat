@@ -1,10 +1,13 @@
 use crate::{
     database::connection::DbPool,
-    models::{auth::{LoginRequest, RegisterRequest, AuthResponse, UserInfo}, user::{User, CreateUser, OnlineStatus}},
+    models::{
+        auth::{AuthResponse, LoginRequest, RegisterRequest, UserInfo},
+        user::{CreateUser, OnlineStatus, User},
+    },
     services::auth::AuthService,
     utils::helpers::ApiResponse,
 };
-use actix_web::{HttpResponse, Result, web};
+use actix_web::{web, HttpResponse, Result};
 use tracing::error;
 
 pub async fn register(
@@ -41,7 +44,10 @@ pub async fn register(
         email: user.email,
     };
 
-    let response = AuthResponse { token, user: user_info };
+    let response = AuthResponse {
+        token,
+        user: user_info,
+    };
     Ok(HttpResponse::Created().json(ApiResponse::success(response)))
 }
 
@@ -54,7 +60,9 @@ pub async fn login(
         actix_web::error::ErrorInternalServerError("Authentication service error")
     })?;
 
-    let user = auth_service.authenticate_user(&pool, &request.username, &request.password).await
+    let user = auth_service
+        .authenticate_user(&pool, &request.username, &request.password)
+        .await
         .map_err(|e| {
             error!("Authentication error: {}", e);
             actix_web::error::ErrorInternalServerError("Authentication error")
@@ -76,6 +84,9 @@ pub async fn login(
         email: user.email,
     };
 
-    let response = AuthResponse { token, user: user_info };
+    let response = AuthResponse {
+        token,
+        user: user_info,
+    };
     Ok(HttpResponse::Ok().json(ApiResponse::success(response)))
-} 
+}

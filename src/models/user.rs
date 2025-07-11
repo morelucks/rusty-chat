@@ -1,9 +1,9 @@
 use crate::database::connection::DbPool;
+use bcrypt::{hash, verify, DEFAULT_COST};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
 use uuid::Uuid;
-use bcrypt::{hash, verify, DEFAULT_COST};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type, PartialEq, Eq)]
 #[sqlx(type_name = "online_status", rename_all = "lowercase")]
@@ -36,9 +36,9 @@ pub struct CreateUser {
 impl User {
     pub async fn create(pool: &DbPool, user: CreateUser) -> Result<Self, sqlx::Error> {
         let now = Utc::now();
-        let hashed_password = hash(user.password.as_bytes(), DEFAULT_COST)
-            .map_err(|_| sqlx::Error::RowNotFound)?;
-        
+        let hashed_password =
+            hash(user.password.as_bytes(), DEFAULT_COST).map_err(|_| sqlx::Error::RowNotFound)?;
+
         let user = sqlx::query_as::<_, User>(
             "INSERT INTO users (id, full_name, username, email, password, status, created_at, updated_at) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
@@ -67,7 +67,10 @@ impl User {
         Ok(user)
     }
 
-    pub async fn find_by_username(pool: &DbPool, username: &str) -> Result<Option<Self>, sqlx::Error> {
+    pub async fn find_by_username(
+        pool: &DbPool,
+        username: &str,
+    ) -> Result<Option<Self>, sqlx::Error> {
         let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = $1")
             .bind(username)
             .fetch_optional(pool)
@@ -88,7 +91,11 @@ impl User {
         verify(password, &self.password)
     }
 
-    pub async fn authenticate(pool: &DbPool, username: &str, password: &str) -> Result<Option<Self>, sqlx::Error> {
+    pub async fn authenticate(
+        pool: &DbPool,
+        username: &str,
+        password: &str,
+    ) -> Result<Option<Self>, sqlx::Error> {
         if let Some(user) = Self::find_by_username(pool, username).await? {
             if user.verify_password(password).unwrap_or(false) {
                 return Ok(Some(user));
