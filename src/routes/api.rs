@@ -52,5 +52,13 @@ pub fn scoped_config(cfg: &mut web::ServiceConfig) {
                     .route(web::get().to(handlers::broadcast::is_user_in_room))
                     .route(web::head().to(HttpResponse::MethodNotAllowed)),
             ),
+        )
+        .service(
+            web::scope("/auth")
+            .service(
+                web::resource("/register")
+                    .route(web::post().to(handlers::auth::register))
+                    .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            ),
     );
 }

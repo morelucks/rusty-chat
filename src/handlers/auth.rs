@@ -2,25 +2,15 @@ use crate::{database::connection::DbPool, models::user::{CreateUser, User}, util
 use actix_web::{HttpResponse, Result, web};
 use tracing::error;
 
-pub async fn index(pool: web::Data<DbPool>) -> Result<HttpResponse> {
-    let users = User::find_all(&pool).await.map_err(|e| {
-        error!("Failed to fetch users: {}", e);
-        actix_web::error::ErrorInternalServerError("Failed to fetch users")
-    })?;
+// pub async fn login(pool: web::Data<DbPool>, user: web::Json<LoginUser>) -> Result<HttpResponse> {
+//     let user = User::find_by_email(&pool, user.email).await.map_err(|e| {
+//         error!("Failed to find user: {}", e);
+//         actix_web::error::ErrorInternalServerError("Failed to find user")
+//     })?;
 
-    Ok(HttpResponse::Ok().json(ApiResponse::success(users)))
-}
+//     Ok(HttpResponse::Ok().json(ApiResponse::success(user)))
+// }
 
-// user registration handler
-/**
- * pub struct CreateUser {
-    pub full_name: String,
-    pub username: String,
-    pub email: String,
-    pub password: String,
-    pub status: String,
-}
- */
 pub async fn register(pool: web::Data<DbPool>, user: web::Json<CreateUser>) -> Result<HttpResponse> {
     let new_user = User::create(&pool, user.into_inner()).await.map_err(|e| {
         error!("Failed to register user: {}", e);

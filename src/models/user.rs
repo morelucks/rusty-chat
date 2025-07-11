@@ -4,11 +4,22 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "online_status")]
+pub enum OnlineStatus {
+    #[sqlx(rename = "online")]
+    Online,
+    #[sqlx(rename = "offline")]
+    Offline,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct User {
     pub id: Uuid,
+    pub full_name: String,
     pub username: String,
     pub email: String,
+    pub status: OnlineStatus,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -19,7 +30,7 @@ pub struct CreateUser {
     pub username: String,
     pub email: String,
     pub password: String,
-    pub status: String,
+    pub status: OnlineStatus,
 }
 
 impl User {
