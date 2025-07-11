@@ -1,4 +1,4 @@
-use crate::{database::connection::DbPool, models::user::{CreateUser, LoginUser, OnlineStatus, User, UserRegistrationRequest}, utils::{helpers::ApiResponse, jwt}};
+use crate::{database::connection::DbPool, models::user::{CreateUser, LoginUser, OnlineStatus, User, UserRegistrationRequest}, utils::{helpers::{ApiResponse, hash_password, verify_password}, jwt}};
 use actix_web::{HttpResponse, Result, web};
 use tracing::error;
 
@@ -64,12 +64,18 @@ pub async fn register(pool: web::Data<DbPool>, user: web::Json<UserRegistrationR
         return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Username already exist".to_string())));
     }
 
+    let hashed_password = hash_password(&user_data.password)
+    .map_err(|e| {
+        error!("Failed to hash password: {}", e);
+        actix_web::error::ErrorInternalServerError("Failed to hash password")
+    })?;
+
     // create user
     let new_user = User::create(&pool, CreateUser {
         full_name: user_data.full_name,
         username: user_data.username,
         email: user_data.email,
-        password: user_data.password,
+        password: hashed_password,
         status: OnlineStatus::Offline,
     }).await.map_err(|e| {
         error!("Failed to register user: {}", e);
