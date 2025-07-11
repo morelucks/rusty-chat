@@ -19,9 +19,13 @@ pub async fn login(pool: web::Data<DbPool>, user: web::Json<LoginUser>) -> Resul
         }
     };
 
-    if user.password.clone() != user_exist.password {
-        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid login details".to_string())));
-    }
+    if !verify_password(&user.password, &user_exist.password)
+    .map_err(|e| {
+        error!("Failed to verify password: {}", e);
+        actix_web::error::ErrorInternalServerError("Failed to verify password")
+    })? {
+    return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid login details".to_string())));
+}
 
     let user = User::find_by_id(&pool, user_exist.id.clone()).await.map_err(|e| {
         error!("Invalid user: {}", e);
