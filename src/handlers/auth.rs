@@ -23,6 +23,11 @@ pub async fn login(pool: web::Data<DbPool>, user: web::Json<LoginUser>) -> Resul
         return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid login details".to_string())));
     }
 
+    let user = User::find_by_id(&pool, user_exist.id.clone()).await.map_err(|e| {
+        error!("Invalid user: {}", e);
+        actix_web::error::ErrorInternalServerError("Invalid user")
+    })?;
+
     let token = jwt::create_jwt(&user_exist.id.to_string(), 60 * 24).map_err(|e| {
         error!("Failed to create JWT: {}", e);
         actix_web::error::ErrorInternalServerError("Failed to create token")
@@ -32,8 +37,6 @@ pub async fn login(pool: web::Data<DbPool>, user: web::Json<LoginUser>) -> Resul
         "token": token,
         "user": user
     })))
-
-    
 }
 
 pub async fn register(pool: web::Data<DbPool>, user: web::Json<UserRegistrationRequest>) -> Result<HttpResponse> {
