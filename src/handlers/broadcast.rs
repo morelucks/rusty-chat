@@ -1,9 +1,9 @@
 use crate::{
     database::connection::DbPool,
-    handlers::message_broadcast::{BroadcastService, CreateBroadcastMessage, BroadcastMessageType},
+    handlers::message_broadcast::{BroadcastMessageType, BroadcastService, CreateBroadcastMessage},
     utils::helpers::ApiResponse,
 };
-use actix_web::{HttpResponse, Result, web};
+use actix_web::{web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use uuid::Uuid;
@@ -58,12 +58,11 @@ pub async fn broadcast_text(
     request: web::Json<BroadcastTextRequest>,
 ) -> Result<HttpResponse> {
     let broadcast_service = BroadcastService::new(pool.get_ref().clone());
-    
-    match broadcast_service.broadcast_text_message(
-        request.room_id,
-        request.sender_id,
-        request.content.clone(),
-    ).await {
+
+    match broadcast_service
+        .broadcast_text_message(request.room_id, request.sender_id, request.content.clone())
+        .await
+    {
         Ok(_) => {
             let response = BroadcastResponse {
                 success: true,
@@ -73,9 +72,11 @@ pub async fn broadcast_text(
         }
         Err(e) => {
             error!("Failed to broadcast text message: {}", e);
-            Ok(HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
-                "Failed to broadcast message".to_string(),
-            )))
+            Ok(
+                HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
+                    "Failed to broadcast message".to_string(),
+                )),
+            )
         }
     }
 }
@@ -86,8 +87,11 @@ pub async fn broadcast_typing(
     request: web::Json<BroadcastTypingRequest>,
 ) -> Result<HttpResponse> {
     let broadcast_service = BroadcastService::new(pool.get_ref().clone());
-    
-    match broadcast_service.broadcast_typing(request.room_id, request.sender_id).await {
+
+    match broadcast_service
+        .broadcast_typing(request.room_id, request.sender_id)
+        .await
+    {
         Ok(_) => {
             let response = BroadcastResponse {
                 success: true,
@@ -97,9 +101,11 @@ pub async fn broadcast_typing(
         }
         Err(e) => {
             error!("Failed to broadcast typing indicator: {}", e);
-            Ok(HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
-                "Failed to broadcast typing indicator".to_string(),
-            )))
+            Ok(
+                HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
+                    "Failed to broadcast typing indicator".to_string(),
+                )),
+            )
         }
     }
 }
@@ -110,12 +116,15 @@ pub async fn broadcast_read_receipt(
     request: web::Json<BroadcastReadRequest>,
 ) -> Result<HttpResponse> {
     let broadcast_service = BroadcastService::new(pool.get_ref().clone());
-    
-    match broadcast_service.broadcast_read_receipt(
-        request.room_id,
-        request.sender_id,
-        request.message_id.clone(),
-    ).await {
+
+    match broadcast_service
+        .broadcast_read_receipt(
+            request.room_id,
+            request.sender_id,
+            request.message_id.clone(),
+        )
+        .await
+    {
         Ok(_) => {
             let response = BroadcastResponse {
                 success: true,
@@ -125,9 +134,11 @@ pub async fn broadcast_read_receipt(
         }
         Err(e) => {
             error!("Failed to broadcast read receipt: {}", e);
-            Ok(HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
-                "Failed to broadcast read receipt".to_string(),
-            )))
+            Ok(
+                HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
+                    "Failed to broadcast read receipt".to_string(),
+                )),
+            )
         }
     }
 }
@@ -138,8 +149,11 @@ pub async fn join_room(
     request: web::Json<JoinRoomRequest>,
 ) -> Result<HttpResponse> {
     let broadcast_service = BroadcastService::new(pool.get_ref().clone());
-    
-    match broadcast_service.add_user_to_room(request.room_id, request.user_id).await {
+
+    match broadcast_service
+        .add_user_to_room(request.room_id, request.user_id)
+        .await
+    {
         Ok(_) => {
             let response = BroadcastResponse {
                 success: true,
@@ -149,9 +163,8 @@ pub async fn join_room(
         }
         Err(e) => {
             error!("Failed to add user to room: {}", e);
-            Ok(HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
-                "Failed to join room".to_string(),
-            )))
+            Ok(HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error("Failed to join room".to_string())))
         }
     }
 }
@@ -162,8 +175,11 @@ pub async fn leave_room(
     request: web::Json<LeaveRoomRequest>,
 ) -> Result<HttpResponse> {
     let broadcast_service = BroadcastService::new(pool.get_ref().clone());
-    
-    match broadcast_service.remove_user_from_room(request.room_id, request.user_id).await {
+
+    match broadcast_service
+        .remove_user_from_room(request.room_id, request.user_id)
+        .await
+    {
         Ok(_) => {
             let response = BroadcastResponse {
                 success: true,
@@ -173,9 +189,8 @@ pub async fn leave_room(
         }
         Err(e) => {
             error!("Failed to remove user from room: {}", e);
-            Ok(HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
-                "Failed to leave room".to_string(),
-            )))
+            Ok(HttpResponse::InternalServerError()
+                .json(ApiResponse::<()>::error("Failed to leave room".to_string())))
         }
     }
 }
@@ -186,8 +201,11 @@ pub async fn broadcast_system_message(
     request: web::Json<SystemMessageRequest>,
 ) -> Result<HttpResponse> {
     let broadcast_service = BroadcastService::new(pool.get_ref().clone());
-    
-    match broadcast_service.broadcast_system_message(request.room_id, request.content.clone()).await {
+
+    match broadcast_service
+        .broadcast_system_message(request.room_id, request.content.clone())
+        .await
+    {
         Ok(_) => {
             let response = BroadcastResponse {
                 success: true,
@@ -197,9 +215,11 @@ pub async fn broadcast_system_message(
         }
         Err(e) => {
             error!("Failed to broadcast system message: {}", e);
-            Ok(HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
-                "Failed to broadcast system message".to_string(),
-            )))
+            Ok(
+                HttpResponse::InternalServerError().json(ApiResponse::<()>::error(
+                    "Failed to broadcast system message".to_string(),
+                )),
+            )
         }
     }
 }
@@ -212,9 +232,9 @@ pub async fn get_room_users(
     let room_id = path.into_inner();
     let broadcast_service = BroadcastService::new(pool.get_ref().clone());
     let connection_manager = broadcast_service.get_connection_manager();
-    
+
     let users = connection_manager.get_room_users(room_id).await;
-    
+
     Ok(HttpResponse::Ok().json(ApiResponse::success(users)))
 }
 
@@ -226,8 +246,8 @@ pub async fn is_user_in_room(
     let (room_id, user_id) = path.into_inner();
     let broadcast_service = BroadcastService::new(pool.get_ref().clone());
     let connection_manager = broadcast_service.get_connection_manager();
-    
+
     let is_in_room = connection_manager.is_user_in_room(room_id, user_id).await;
-    
+
     Ok(HttpResponse::Ok().json(ApiResponse::success(is_in_room)))
-} 
+}
