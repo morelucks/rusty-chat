@@ -1,4 +1,4 @@
-use crate::{database::connection::DbPool, models::user::{CreateUser, LoginUser, OnlineStatus, User, UserRegistrationRequest}, utils::helpers::ApiResponse};
+use crate::{database::connection::DbPool, models::user::{CreateUser, LoginUser, OnlineStatus, User, UserRegistrationRequest}, utils::{helpers::ApiResponse, jwt}};
 use actix_web::{HttpResponse, Result, web};
 use tracing::error;
 
@@ -12,11 +12,28 @@ pub async fn login(pool: web::Data<DbPool>, user: web::Json<LoginUser>) -> Resul
         return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Email does exists".to_string())));
     }
 
-    if user.password.clone() != user.password {
+    let user_exist = match user_exist {
+        Some(u) => u,
+        None => {
+            return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Email does not exist".to_string())));
+        }
+    };
+
+    if user.password.clone() != user_exist.password {
         return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid login details".to_string())));
     }
+
+    let token = jwt::create_jwt(&user_exist.id.to_string(), 60 * 24).map_err(|e| {
+        error!("Failed to create JWT: {}", e);
+        actix_web::error::ErrorInternalServerError("Failed to create token")
+    })?;
     
-    Ok(HttpResponse::Ok().json(ApiResponse::success(user)))
+    Ok(HttpResponse::Ok().json(serde_json::json!({
+        "token": token,
+        "user": user
+    })))
+
+    
 }
 
 pub async fn register(pool: web::Data<DbPool>, user: web::Json<UserRegistrationRequest>) -> Result<HttpResponse> {

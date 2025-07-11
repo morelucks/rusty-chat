@@ -48,6 +48,18 @@ pub struct LoginUser {
     pub password: String
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct LoginUserResponse {
+    pub id: Uuid,
+    pub full_name: String,
+    pub username: String,
+    pub password: String,
+    pub email: String,
+    pub status: OnlineStatus,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
 impl User {
     pub async fn create(pool: &DbPool, user: CreateUser) -> Result<Self, sqlx::Error> {
         let now = Utc::now();
@@ -79,8 +91,8 @@ impl User {
         Ok(user)
     }
 
-    pub async fn find_by_email(pool: &DbPool, email: String) -> Result<Option<Self>, sqlx::Error> {
-        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE email = $1")
+    pub async fn find_by_email(pool: &DbPool, email: String) -> Result<Option<LoginUserResponse>, sqlx::Error> {
+        let user = sqlx::query_as::<_, LoginUserResponse>("SELECT * FROM users WHERE email = $1")
             .bind(email)
             .fetch_optional(pool)
             .await?;
