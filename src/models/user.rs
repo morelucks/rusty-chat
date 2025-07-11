@@ -42,6 +42,12 @@ pub struct UserRegistrationRequest {
     pub confirm_password: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LoginUser {
+    pub email: String,
+    pub password: String
+}
+
 impl User {
     pub async fn create(pool: &DbPool, user: CreateUser) -> Result<Self, sqlx::Error> {
         let now = Utc::now();

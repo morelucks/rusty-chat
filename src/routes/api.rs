@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, web};
+use actix_web::{web::{self, service}, HttpResponse};
 
 use crate::handlers;
 
@@ -59,6 +59,11 @@ pub fn scoped_config(cfg: &mut web::ServiceConfig) {
                 web::resource("/register")
                     .route(web::post().to(handlers::auth::register))
                     .route(web::head().to(HttpResponse::MethodNotAllowed)),
+            )
+            .service(
+                web::resource("/login")
+                .route(web::post().to(handlers::auth::login))
+                .route(web::head().to(HttpResponse::MethodNotAllowed)),
             ),
     );
 }

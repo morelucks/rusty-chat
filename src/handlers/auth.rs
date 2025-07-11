@@ -1,15 +1,23 @@
-use crate::{database::connection::DbPool, models::user::{CreateUser, OnlineStatus, User, UserRegistrationRequest}, utils::helpers::ApiResponse};
+use crate::{database::connection::DbPool, models::user::{CreateUser, LoginUser, OnlineStatus, User, UserRegistrationRequest}, utils::helpers::ApiResponse};
 use actix_web::{HttpResponse, Result, web};
 use tracing::error;
 
-// pub async fn login(pool: web::Data<DbPool>, user: web::Json<LoginUser>) -> Result<HttpResponse> {
-//     let user = User::find_by_email(&pool, user.email).await.map_err(|e| {
-//         error!("Failed to find user: {}", e);
-//         actix_web::error::ErrorInternalServerError("Failed to find user")
-//     })?;
+pub async fn login(pool: web::Data<DbPool>, user: web::Json<LoginUser>) -> Result<HttpResponse> {
+    let user_exist = User::find_by_email(&pool, user.email.clone()).await.map_err(|e| {
+        error!("Failed to find user: {}", e);
+        actix_web::error::ErrorInternalServerError("Failed to find user")
+    })?;
 
-//     Ok(HttpResponse::Ok().json(ApiResponse::success(user)))  
-// }
+    if user_exist.is_none() {
+        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Email does exists".to_string())));
+    }
+
+    if user.password.clone() != user.password {
+        return Ok(HttpResponse::BadRequest().json(ApiResponse::<()>::error("Invalid login details".to_string())));
+    }
+    
+    Ok(HttpResponse::Ok().json(ApiResponse::success(user)))
+}
 
 pub async fn register(pool: web::Data<DbPool>, user: web::Json<UserRegistrationRequest>) -> Result<HttpResponse> {
     let user_data = user.into_inner();
