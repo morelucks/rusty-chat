@@ -1,4 +1,4 @@
-use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use config::settings::AppConfig;
 use database::connection::{create_pool, run_migrations};
 use dotenv::dotenv;
@@ -8,15 +8,12 @@ use tracing_subscriber;
 pub mod config;
 pub mod database;
 pub mod handlers;
+pub mod middleware;
 pub mod models;
+pub mod requests;
 pub mod routes;
 pub mod services;
 pub mod utils;
-
-#[get("/")]
-async fn home() -> impl Responder {
-    HttpResponse::Ok().body("rusty-chat")
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

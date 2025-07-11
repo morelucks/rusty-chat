@@ -21,6 +21,7 @@ lazy_static = "1.4"
 jsonwebtoken = "9.0"
 bcrypt = "0.15"
 actix-web-actors = "4"
+futures-util= "0.3.31"
 
 [dev-dependencies]
 tokio-test = "0.4"

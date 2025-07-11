@@ -11,7 +11,6 @@ pub struct Room {
     pub created_by: Uuid,
     pub is_private: bool,
     pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,15 +24,14 @@ impl Room {
     pub async fn create(pool: &DbPool, room: CreateRoom) -> Result<Self, sqlx::Error> {
         let now = Utc::now();
         let room = sqlx::query_as::<_, Room>(
-            "INSERT INTO rooms (id, name, created_by, is_private, created_at, updated_at) 
-             VALUES ($1, $2, $3, $4, $5, $6) 
+            "INSERT INTO rooms (id, name, created_by, is_private, created_at) 
+             VALUES ($1, $2, $3, $4, $5) 
              RETURNING *",
         )
         .bind(Uuid::new_v4())
         .bind(room.name)
         .bind(room.created_by)
         .bind(room.is_private)
-        .bind(now)
         .bind(now)
         .fetch_one(pool)
         .await?;
@@ -54,20 +52,6 @@ impl Room {
         let rooms = sqlx::query_as::<_, Room>("SELECT * FROM rooms ORDER BY created_at DESC")
             .fetch_all(pool)
             .await?;
-
-        Ok(rooms)
-    }
-
-    pub async fn find_by_created_by(
-        pool: &DbPool,
-        created_by: Uuid,
-    ) -> Result<Vec<Self>, sqlx::Error> {
-        let rooms = sqlx::query_as::<_, Room>(
-            "SELECT * FROM rooms WHERE created_by = $1 ORDER BY created_at DESC",
-        )
-        .bind(created_by)
-        .fetch_all(pool)
-        .await?;
 
         Ok(rooms)
     }
