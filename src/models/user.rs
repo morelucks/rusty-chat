@@ -33,6 +33,15 @@ pub struct CreateUser {
     pub status: OnlineStatus,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserRegistrationRequest {
+    pub full_name: String,
+    pub username: String,
+    pub email: String,
+    pub password: String,
+    pub confirm_password: String,
+}
+
 impl User {
     pub async fn create(pool: &DbPool, user: CreateUser) -> Result<Self, sqlx::Error> {
         let now = Utc::now();
@@ -58,6 +67,24 @@ impl User {
     pub async fn find_by_id(pool: &DbPool, id: Uuid) -> Result<Option<Self>, sqlx::Error> {
         let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
             .bind(id)
+            .fetch_optional(pool)
+            .await?;
+
+        Ok(user)
+    }
+
+    pub async fn find_by_email(pool: &DbPool, email: String) -> Result<Option<Self>, sqlx::Error> {
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE email = $1")
+            .bind(email)
+            .fetch_optional(pool)
+            .await?;
+
+        Ok(user)
+    }
+
+    pub async fn find_by_username(pool: &DbPool, username: String) -> Result<Option<Self>, sqlx::Error> {
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE username = $1")
+            .bind(username)
             .fetch_optional(pool)
             .await?;
 
