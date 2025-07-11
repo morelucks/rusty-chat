@@ -1,6 +1,6 @@
 use actix_web::{HttpResponse, web};
 
-use crate::handlers;
+use crate::{handlers, middleware::auth::AuthMiddleware};
 
 pub fn scoped_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -24,7 +24,7 @@ pub fn scoped_config(cfg: &mut web::ServiceConfig) {
         web::scope("/rooms")
         .service(
             web::resource("")
-            .route(web::post().to(handlers::rooms::create_room))
+            .route(web::post().to(handlers::rooms::create_room).wrap(AuthMiddleware))
             .route(web::get().to(handlers::rooms::get_all_rooms))
             .route(web::head().to(HttpResponse::MethodNotAllowed)),
         )

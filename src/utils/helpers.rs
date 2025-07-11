@@ -1,6 +1,7 @@
+use actix_web::HttpResponse;
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct ApiResponse<T> {
     success: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -24,5 +25,15 @@ impl<T> ApiResponse<T> {
             data: None,
             error: Some(message),
         }
+    }
+
+    // pub fn to_response(&self, status: actix_web::http::StatusCode) -> HttpResponse {
+    //     HttpResponse::build(status).json(self)
+    // }
+}
+
+impl ApiResponse<()> {
+    pub fn to_response(&self, status: actix_web::http::StatusCode) -> HttpResponse {
+        HttpResponse::build(status).json(self)
     }
 }

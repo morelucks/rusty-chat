@@ -2,16 +2,21 @@ use actix_web::{web, HttpResponse, Result};
 use uuid::Uuid;
 use tracing::{error, warn};
 use crate::{
-    utils::helpers::ApiResponse,
-    models::room::{Room, CreateRoom},
-    database::connection::DbPool
+    database::connection::DbPool, middleware::auth::AuthenticatedUser, models::room::{CreateRoom, Room}, requests::room_requests::CreateRoomRequest, utils::helpers::ApiResponse
 };
 
 pub async fn create_room(
     pool: web::Data<DbPool>,
-    room_data: web::Json<CreateRoom>,
+    room_data: web::Json<CreateRoomRequest>,
+    user: AuthenticatedUser,
 ) -> Result<HttpResponse> {
-    let room = Room::create(&pool, room_data.into_inner()).await
+    let create_data = CreateRoom {
+        name: room_data.name.clone(),
+        is_private: room_data.is_private,
+        created_by: user.user_id,
+    };
+
+    let room = Room::create(&pool, create_data).await
         .map_err(|e| {
             error!("Failed to create room: {}", e);
             actix_web::error::ErrorInternalServerError("Failed to create room")
