@@ -1,5 +1,6 @@
 use actix_web::{web, HttpResponse};
 
+use crate::routes::ws::ws_route;
 use crate::{handlers, middleware::auth::AuthMiddleware};
 
 pub fn scoped_config(cfg: &mut web::ServiceConfig) {
@@ -32,5 +33,7 @@ pub fn scoped_config(cfg: &mut web::ServiceConfig) {
                     .route(web::get().to(handlers::rooms::get_room_by_id))
                     .route(web::head().to(HttpResponse::MethodNotAllowed)),
             ),
-    );
+    )
+    // Add the websocket endpoint for room chat
+    .service(web::resource("/ws/").route(web::get().to(ws_route)));
 }

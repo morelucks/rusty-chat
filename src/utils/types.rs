@@ -19,3 +19,9 @@ pub enum ServerMessage {
     Join { room_id: String, user_id: String },
     Leave { room_id: String, user_id: String },
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,
+    pub exp: usize,
+}
