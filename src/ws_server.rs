@@ -9,7 +9,9 @@ pub struct ChatServer {
 
 impl ChatServer {
     pub fn new() -> Self {
-        Self { rooms: HashMap::new() }
+        Self {
+            rooms: HashMap::new(),
+        }
     }
 }
 
@@ -29,9 +31,7 @@ impl Handler<JoinRoom> for ChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: JoinRoom, _: &mut Context<Self>) {
-        self.rooms.entry(msg.room_id)
-            .or_default()
-            .insert(msg.addr);
+        self.rooms.entry(msg.room_id).or_default().insert(msg.addr);
     }
 }
 

@@ -1,4 +1,4 @@
-use actix::{Actor, Addr, AsyncContext, Handler, Message, StreamHandler, Context};
+use actix::{Actor, Addr, AsyncContext, Context, Handler, Message, StreamHandler};
 use actix_web_actors::ws;
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,10 @@ pub struct ChatSession {
 
 impl ChatSession {
     pub fn new(room_id: String, server_addr: Addr<super::ws_server::ChatServer>) -> Self {
-        Self { room_id, server_addr }
+        Self {
+            room_id,
+            server_addr,
+        }
     }
 }
 
@@ -43,10 +46,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChatSession {
             // Expect JSON: { "type": "message", "content": "...", "room_id": "..." }
             if let Ok(incoming) = serde_json::from_str::<IncomingMessage>(&text) {
                 if incoming.msg_type == "message" {
-                    self.server_addr.do_send(super::ws_server::BroadcastMessage {
-                        room_id: self.room_id.clone(),
-                        message: incoming.content,
-                    });
+                    self.server_addr
+                        .do_send(super::ws_server::BroadcastMessage {
+                            room_id: self.room_id.clone(),
+                            message: incoming.content,
+                        });
                 }
             }
         }

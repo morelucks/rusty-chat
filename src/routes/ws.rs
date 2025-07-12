@@ -1,8 +1,8 @@
+use crate::services::auth::AuthService;
 use actix::Addr;
-use actix_web::{web, HttpRequest, HttpResponse, Error};
+use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use rusty_chat::{ws_server::ChatServer, ws_session::ChatSession};
-use crate::services::auth::AuthService;
 
 pub async fn ws_route(
     req: HttpRequest,
@@ -15,10 +15,16 @@ pub async fn ws_route(
         .get("Authorization")
         .and_then(|h| h.to_str().ok())
         .and_then(|h| h.strip_prefix("Bearer "))
-        .or_else(|| req.query_string().split('&').find_map(|kv| {
-            let mut split = kv.split('=');
-            if split.next()? == "token" { split.next() } else { None }
-        }));
+        .or_else(|| {
+            req.query_string().split('&').find_map(|kv| {
+                let mut split = kv.split('=');
+                if split.next()? == "token" {
+                    split.next()
+                } else {
+                    None
+                }
+            })
+        });
 
     let token = match token {
         Some(t) => t,
@@ -36,7 +42,11 @@ pub async fn ws_route(
         .split('&')
         .find_map(|kv| {
             let mut split = kv.split('=');
-            if split.next()? == "room_id" { split.next() } else { None }
+            if split.next()? == "room_id" {
+                split.next()
+            } else {
+                None
+            }
         })
         .unwrap_or("default")
         .to_string();
