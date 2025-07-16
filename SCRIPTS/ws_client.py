@@ -13,11 +13,6 @@ def on_close(ws, close_status_code, close_msg):
 
 def on_open(ws):
     print("WebSocket connection opened")
-    msg = {
-        "type": "message",
-        "content": "Hello, room!"
-    }
-    ws.send(json.dumps(msg))
 
 if __name__ == "__main__":
     room_id = input("Enter room ID: ").strip()
@@ -45,7 +40,20 @@ if __name__ == "__main__":
             msg = input("Type message (or 'exit' to quit): ")
             if msg.lower() == "exit":
                 break
-            ws.send(json.dumps({"type": "message", "content": msg}))
+            direct = input("Send as direct message? (y/n): ").strip().lower()
+            if direct == "y":
+                recipient_id = input("Enter recipient user ID (UUID): ").strip()
+                payload = {
+                    "type": "message",
+                    "content": msg,
+                    "recipient_id": recipient_id
+                }
+            else:
+                payload = {
+                    "type": "message",
+                    "content": msg
+                }
+            ws.send(json.dumps(payload))
     except KeyboardInterrupt:
         pass
     ws.close()
