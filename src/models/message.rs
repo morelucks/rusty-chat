@@ -73,13 +73,16 @@ impl Message {
         Ok(messages)
     }
 
-    pub async fn find_by_recipient_id(pool: &DbPool, recipient_id: Uuid) -> Result<Vec<Self>, sqlx::Error> {
+    pub async fn find_by_recipient_id(
+        pool: &DbPool,
+        recipient_id: Uuid,
+    ) -> Result<Vec<Self>, sqlx::Error> {
         let messages = sqlx::query_as::<_, Message>(
             "SELECT * FROM messages WHERE recipient_id = $1 ORDER BY created_at DESC",
         )
-            .bind(recipient_id)
-            .fetch_all(pool)
-            .await?;
+        .bind(recipient_id)
+        .fetch_all(pool)
+        .await?;
 
         Ok(messages)
     }
