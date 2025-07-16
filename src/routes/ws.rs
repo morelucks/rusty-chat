@@ -10,6 +10,7 @@ pub async fn ws_route(
     srv: web::Data<Addr<ChatServer>>,
     auth_service: web::Data<AuthService>,
 ) -> Result<HttpResponse, Error> {
+    
     let token = req
         .headers()
         .get("Authorization")
@@ -32,10 +33,12 @@ pub async fn ws_route(
     };
 
     // Validate JWT using AuthService
-    let _claims = match auth_service.validate_token(token) {
+    let claims = match auth_service.validate_token(token) {
         Ok(claims) => claims,
         Err(_) => return Ok(HttpResponse::Unauthorized().body("Invalid token")),
     };
+
+    let user_id = claims.sub;
 
     let room_id = req
         .query_string()
@@ -52,7 +55,7 @@ pub async fn ws_route(
         .to_string();
 
     ws::start(
-        ChatSession::new(room_id, srv.get_ref().clone()),
+        ChatSession::new(room_id, user_id, srv.get_ref().clone()),
         &req,
         stream,
     )
