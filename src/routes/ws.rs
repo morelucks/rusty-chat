@@ -10,7 +10,6 @@ pub async fn ws_route(
     srv: web::Data<Addr<ChatServer>>,
     auth_service: web::Data<AuthService>,
 ) -> Result<HttpResponse, Error> {
-    
     let token = req
         .headers()
         .get("Authorization")
@@ -37,8 +36,7 @@ pub async fn ws_route(
         Ok(claims) => claims,
         Err(_) => return Ok(HttpResponse::Unauthorized().body("Invalid token")),
     };
-
-    let user_id = claims.sub;
+    let user_id = claims.sub.to_string();
 
     let room_id = req
         .query_string()
@@ -55,7 +53,7 @@ pub async fn ws_route(
         .to_string();
 
     ws::start(
-        ChatSession::new(room_id, user_id, srv.get_ref().clone()),
+        ChatSession::new(user_id, room_id, srv.get_ref().clone()),
         &req,
         stream,
     )

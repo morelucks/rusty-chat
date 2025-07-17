@@ -8,6 +8,7 @@ pub enum ClientMessage {
     Read { message_id: String },
     Join { room_id: String, user_id: String },
     Leave { room_id: String, user_id: String },
+    Private { to: String, content: String },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,6 +19,7 @@ pub enum ServerMessage {
     Read { message_id: String, user_id: String },
     Join { room_id: String, user_id: String },
     Leave { room_id: String, user_id: String },
+    Private { from: String, content: String },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
